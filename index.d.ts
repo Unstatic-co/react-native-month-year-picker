@@ -56,6 +56,8 @@ export interface MonthPickerProps {
     * Default null.
     */
     neutralButton?:string;
+
+    ref?: any
 }
 
 declare const MonthPicker: FunctionComponent<MonthPickerProps>;

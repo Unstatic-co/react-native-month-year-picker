@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { View, StyleSheet, Dimensions, Animated } from 'react-native';
 import moment from 'moment';
 import invariant from 'invariant';
@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
   picker: { flex: 1 },
 });
 
-const MonthPicker = ({
+const MonthPicker = forwardRef(({
   value,
   minimumDate,
   maximumDate,
@@ -40,11 +40,17 @@ const MonthPicker = ({
   cancelButton,
   neutralButton,
   autoTheme = true,
-}) => {
+}, ref) => {
   invariant(value, 'value prop is required!');
 
   const [opacity] = useState(new Value(0));
   const [selectedDate, setSelectedDate] = useState(value);
+
+  useImperativeHandle(ref, () => {
+    return {
+      selectedDate
+    }
+  })
 
   useEffect(() => {
     timing(opacity, {
@@ -61,55 +67,22 @@ const MonthPicker = ({
     [],
   );
 
-  const slideOut = useCallback(
-    callback =>
-      timing(opacity, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }).start(callback),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
-
   const onDone = useCallback(() => {
-    slideOut(
-      ({ finished }) =>
-        finished && onAction && onAction(ACTION_DATE_SET, selectedDate),
-    );
+    onAction && onAction(ACTION_DATE_SET, selectedDate)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
   const onCancel = useCallback(() => {
-    slideOut(
-      ({ finished }) =>
-        finished && onAction && onAction(ACTION_DISMISSED, undefined),
-    );
+    onAction && onAction(ACTION_DISMISSED, undefined)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onNeutral = useCallback(() => {
-    slideOut(
-      ({ finished }) =>
-        finished && onAction && onAction(ACTION_NEUTRAL, selectedDate),
-    );
+    onAction && onAction(ACTION_NEUTRAL, selectedDate)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
   return (
-    <Animated.View
-      style={{
-        ...styles.container,
-        opacity,
-        transform: [
-          {
-            translateY: opacity.interpolate({
-              inputRange: [0.4, 1],
-              outputRange: [150, 0],
-            }),
-          },
-        ],
-      }}>
       <View style={styles.pickerContainer}>
         <RNMonthPickerView
           {...{
@@ -130,8 +103,7 @@ const MonthPicker = ({
           maximumDate={maximumDate?.getTime() ?? null}
         />
       </View>
-    </Animated.View>
   );
-};
+});
 
 export default MonthPicker;
